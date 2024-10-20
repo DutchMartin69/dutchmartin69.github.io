@@ -1,0 +1,352 @@
+<html><head><base href="https://websim.co/netherlands/ev-charging/">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Time and Cost calculator on charging your car</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background: linear-gradient(to bottom, #ffffff, #4CAF50);
+        color: #00008B;
+    }
+    .container {
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 10px;
+        padding: 20px;
+        max-width: 90%;
+        width: 400px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+        font-size: 1.2em;
+        text-align: center;
+        margin-bottom: 20px;
+        color: #00008B;
+    }
+    label, select, input, button {
+        display: block;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    select, button {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+    button {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    button:hover {
+        background-color: #45a049;
+    }
+    #result {
+        margin-top: 20px;
+        font-weight: bold;
+        color: #00008B;
+    }
+    .slider-container {
+        width: 100%;
+        margin-bottom: 20px;
+        position: relative;
+    }
+    .slider {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 15px;
+        border-radius: 5px;
+        outline: none;
+        opacity: 0.7;
+        transition: opacity .2s;
+    }
+    .slider:hover {
+        opacity: 1;
+    }
+    .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        background: #4CAF50;
+        cursor: pointer;
+    }
+    .slider::-moz-range-thumb {
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        background: #4CAF50;
+        cursor: pointer;
+    }
+    .slider-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 5px;
+        color: #00008B;
+    }
+    #twitterButton {
+        background-color: #000000;
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    #twitterButton:hover {
+        background-color: #333333;
+    }
+    .charge-value {
+        position: absolute;
+        top: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #4CAF50;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 3px;
+    }
+    .x-icon {
+        width: 20px;
+        height: 20px;
+        margin-right: 8px;
+    }
+    label, p {
+        color: #00008B;
+    }
+    .range-info {
+        position: absolute;
+        top: 30px;
+        left: 0;
+        width: 100%;
+        text-align: center;
+        font-size: 0.9em;
+        color: #00008B;
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Time and Cost calculator on charging your car</h1>
+    
+    <label for="car-model">Select Car Model:</label>
+    <select id="car-model">
+        <option value="">Select a car model</option>
+        <option value="audi">Audi e-tron GT</option>
+        <option value="fiat">Fiat 500</option>
+    </select>
+
+    <label for="charger-type">Select Charger Type:</label>
+    <select id="charger-type">
+        <option value="">Select a charger type</option>
+        <option value="11">11 kW</option>
+        <option value="22">22 kW</option>
+        <option value="50">DC 50+ kW</option>
+        <option value="150">DC 150 kW</option>
+        <option value="375">DC 375 kW</option>
+    </select>
+    
+    <label for="current-charge">Current Charge:</label>
+    <div class="slider-container">
+        <input type="range" min="0" max="100" value="0" class="slider" id="current-charge">
+        <div id="currentChargeValue" class="charge-value">0%</div>
+        <div class="slider-labels">
+            <span>0%</span>
+            <span>100%</span>
+        </div>
+    </div>
+    
+    <label for="desired-charge">Desired End Charge:</label>
+    <div class="slider-container">
+        <input type="range" min="0" max="100" value="100" class="slider" id="desired-charge">
+        <div id="desiredChargeValue" class="charge-value">100%</div>
+        <div class="slider-labels">
+            <span>0%</span>
+            <span>100%</span>
+        </div>
+        <div id="rangeInfo" class="range-info"></div>
+    </div>
+    
+    <button onclick="calculateCost()">Calculate Cost & Time</button>
+    
+    <div id="result"></div>
+    <button id="twitterButton" onclick="shareOnTwitter()" style="display: none;">
+        <svg class="x-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+        </svg>
+        Share on X
+    </button>
+</div>
+
+<script>
+    let kWhToCharge = 0;
+    let selectedCarModel = '';
+
+    const rangeData = {
+        'audi': {
+            100: { km: 402 },
+            80: { km: 322 },
+            60: { km: 241 },
+            40: { km: 161 },
+            20: { km: 80 }
+        },
+        'fiat': {
+            100: { km: 320 },
+            80: { km: 256 },
+            60: { km: 192 },
+            40: { km: 128 },
+            20: { km: 64 }
+        }
+    };
+
+    function calculateCost() {
+        const carModelElement = document.getElementById('car-model');
+        const carModel = carModelElement.value;
+        const chargerTypeElement = document.getElementById('charger-type');
+        const chargerType = parseInt(chargerTypeElement.value);
+        const currentCharge = parseInt(document.getElementById('current-charge').value);
+        const desiredCharge = parseInt(document.getElementById('desired-charge').value);
+
+        if (!carModel || !chargerType) {
+            alert("Please select both a car model and a charger type.");
+            return;
+        }
+
+        selectedCarModel = carModelElement.options[carModelElement.selectedIndex].text;
+        
+        let batteryCapacity;
+        if (carModel === 'audi') {
+            batteryCapacity = 93.4; // kWh
+        } else {
+            batteryCapacity = 42; // kWh
+        }
+        
+        let costPerKWh;
+        if (chargerType <= 22) {
+            costPerKWh = 0.36;
+        } else {
+            costPerKWh = 0.71;
+        }
+        
+        const chargeToAdd = desiredCharge - currentCharge;
+        kWhToCharge = (batteryCapacity * chargeToAdd) / 100;
+        const totalCost = kWhToCharge * costPerKWh;
+        
+        // Calculate charging time in minutes
+        let chargingTimeMinutes;
+        if (chargerType <= 22) {
+            chargingTimeMinutes = (kWhToCharge / chargerType) * 60;
+        } else {
+            // Assuming DC fast charging is about 80% efficient
+            chargingTimeMinutes = (kWhToCharge / (chargerType * 0.8)) * 60;
+        }
+        
+        // Format charging time
+        let formattedChargingTime;
+        if (chargingTimeMinutes < 60) {
+            formattedChargingTime = `${Math.round(chargingTimeMinutes)} minutes`;
+        } else {
+            const hours = Math.floor(chargingTimeMinutes / 60);
+            const minutes = Math.round(chargingTimeMinutes % 60);
+            formattedChargingTime = `${hours} hour${hours > 1 ? 's' : ''} and ${minutes} minute${minutes !== 1 ? 's' : ''}`;
+        }
+        
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = `
+            <p>Cost per kWh: €${costPerKWh.toFixed(2)}</p>
+            <p>Total Cost: €${totalCost.toFixed(2)}</p>
+            <p>Estimated Charging Time: ${formattedChargingTime}</p>
+        `;
+
+        document.getElementById('twitterButton').style.display = 'flex';
+    }
+
+    function shareOnTwitter() {
+        const tweetText = encodeURIComponent(`I just charged my ${selectedCarModel} car and calculated the cost with AI by charging ${kWhToCharge.toFixed(2)} kWh green energy`);
+        const twitterUrl = `https://twitter.com/intent/tweet?text=${tweetText}`;
+        window.open(twitterUrl, '_blank');
+    }
+
+    // Update slider value display and color
+    const currentChargeSlider = document.getElementById('current-charge');
+    const desiredChargeSlider = document.getElementById('desired-charge');
+    const currentChargeValue = document.getElementById('currentChargeValue');
+    const desiredChargeValue = document.getElementById('desiredChargeValue');
+    const rangeInfo = document.getElementById('rangeInfo');
+    
+    function updateSlider(slider, valueDisplay) {
+        const percentage = slider.value;
+        valueDisplay.textContent = `${percentage}%`;
+        
+        let color;
+        if (percentage <= 10) {
+            color = 'purple';
+        } else if (percentage <= 20) {
+            color = 'red';
+        } else if (percentage <= 50) {
+            color = 'orange';
+        } else if (percentage <= 80) {
+            color = 'yellow';
+        } else {
+            color = '#4CAF50'; // green
+        }
+        
+        slider.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${percentage}%, #d3d3d3 ${percentage}%, #d3d3d3 100%)`;
+    }
+
+    function updateDesiredCharge() {
+        const currentCharge = parseInt(currentChargeSlider.value);
+        const desiredCharge = parseInt(desiredChargeSlider.value);
+        const carModel = document.getElementById('car-model').value;
+        
+        if (desiredCharge < currentCharge) {
+            desiredChargeSlider.value = currentCharge;
+        }
+        
+        updateSlider(desiredChargeSlider, desiredChargeValue);
+        
+        if (carModel) {
+            updateRangeInfo(carModel, desiredCharge);
+        } else {
+            rangeInfo.textContent = '';
+        }
+    }
+
+    function updateRangeInfo(carModel, charge) {
+        const closestCharge = [100, 80, 60, 40, 20].reduce((prev, curr) => 
+            Math.abs(curr - charge) < Math.abs(prev - charge) ? curr : prev
+        );
+        
+        const range = rangeData[carModel][closestCharge];
+        rangeInfo.textContent = `Estimated Range: ${range.km} km`;
+    }
+
+    currentChargeSlider.oninput = function() {
+        updateSlider(currentChargeSlider, currentChargeValue);
+        updateDesiredCharge();
+    };
+
+    desiredChargeSlider.oninput = updateDesiredCharge;
+
+    document.getElementById('car-model').onchange = function() {
+        const carModel = this.value;
+        if (carModel) {
+            updateDesiredCharge();
+            updateRangeInfo(carModel, parseInt(desiredChargeSlider.value));
+        } else {
+            rangeInfo.textContent = '';
+        }
+    };
+
+    // Initialize the sliders
+    updateSlider(currentChargeSlider, currentChargeValue);
+    updateSlider(desiredChargeSlider, desiredChargeValue);
+</script>
+</body>
+</html>
