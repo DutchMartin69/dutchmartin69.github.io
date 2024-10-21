@@ -33,6 +33,10 @@
         width: 100%;
         margin-bottom: 10px;
     }
+    select {
+        padding: 12px;
+        font-size: 16px;
+    }
     select, button {
         padding: 10px;
         border: 1px solid #ccc;
@@ -136,6 +140,20 @@
         text-align: center;
         font-size: 0.9em;
         color: #00008B;
+    }
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50"><path d="M10 40 Q20 45 30 40 L70 40 Q80 45 90 40 L90 30 Q95 25 90 20 L80 10 Q70 5 60 10 L40 10 Q30 5 20 10 L10 20 Q5 25 10 30 Z" fill="rgba(0,0,0,0.1)"/> </svg>');
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 80% auto;
+        z-index: -1;
+        opacity: 0.3;
     }
 </style>
 </head>
